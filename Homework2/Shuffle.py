@@ -42,7 +42,7 @@ def shuffle_driver():
     plt.xlabel("n (size of array)")
     plt.ylabel("time (ms)")
     plt.show()
-    plt.savefig("python_running_times.png", format='png')
+    # plt.savefig("python_running_times.png", format='png')
 
 
 if __name__ == '__main__':
