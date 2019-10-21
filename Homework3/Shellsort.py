@@ -42,11 +42,11 @@ if __name__ == '__main__':
             t = 0
             print("running size", sz)
             for _ in range(10):
-                arr = [randint(1, 10000) for _ in range(sz)]
+                arr = buildListToSort(sz)
                 start = time()
                 shellSort(sz, arr)
                 end = time()
-                print(arr)
+                #print(arr)
                 t += (end - start) * 1000
             x.append(sz)
             y.append(t // 10)
