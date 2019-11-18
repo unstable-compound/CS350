@@ -3,6 +3,50 @@ import math
 
 import argparse
 
+
+class TreeNode:
+    def __init__(self, val):
+        self.val = val
+        self.parent = None
+
+    def attach(self, parent):
+        self.parent = parent
+
+    def __repr__(self):
+        if self.parent is None:
+            p = "None"
+        else:
+            p = str(self.parent.val)
+        return "{} -> {}".format(str(self.val), p)
+
+
+class UnionFind:
+    def __init__(self):
+        self.refs = {}
+        self.trees = []
+
+    def makeset(self, x):
+        # Keys must be unique
+        if x in self.refs:
+            raise KeyError
+        self.refs[x] = len(self.trees)
+        self.trees.append(TreeNode(x))
+
+    def find(self, x):
+        current = self.trees[self.refs[x]]
+        while current.parent is not None:
+            current = current.parent
+        return current.val
+
+    def union(self, x, y):
+        parent_x = self.trees[self.refs[self.find(x)]]
+        parent_y = self.trees[self.refs[self.find(y)]]
+        parent_x.attach(parent_y)
+
+    def __repr__(self):
+        return ', '.join(map(str, self.trees))
+
+
 class AdjVertex:
     '''
     Vertex of an adjacency list.
@@ -32,8 +76,6 @@ class GraphAdj:
                 self.vertices[v1] = AdjVertex(v1)
             self.vertices[v1].add_edge(v2, cost)
 
-
-
     def __repr__(self):
         ''' Representation of graph when used in print() statement '''
         ret = []
@@ -42,6 +84,13 @@ class GraphAdj:
                        ', '.join(map(str, self.vertices[vertex].neighbors)) \
                        + ']')
         return '\n'.join(ret)
+
+
+def is_acyclic(union_find, edge):
+    if union_find.find(edge[0]) is union_find.find(edge[1]):
+        return False
+    else:
+        return True
 
 
 class GraphEL:
@@ -58,30 +107,50 @@ class GraphEL:
     def convert_to_adj(self):
         return GraphAdj(self.nvertices, self.edges)
 
-    def prims(self):
-        mst = set()
-        init_vertex = self.edges[0][0]
-        tree_vertices = {init_vertex}
-        while len(mst) != self.nvertices - 1:
-            min_edge = None
-            min_edge_weight = math.inf
-            # find min weight edge u, v
-            for u, v, w in self.edges:
-                # only need to check one way as each edge is duplicated
-                # would not work on directed graph
-                if u in tree_vertices and v not in tree_vertices:
-                    if w < min_edge_weight:
-                        min_edge = (u, v, w)
-                        min_edge_weight = w
-            # add v to tree vertices
-            tree_vertices.add(min_edge[1])
-            # add edge to mst
-            mst.add(min_edge)
+    #  The edges argument is a list of tuples (v1, v2, weight)
+    def sort_edges(self):
+        self.edges.sort(key=lambda x: x[2])
 
-        return mst
+    def list_of_vertices(self):
+        # build set of vertices
+        vertices = list()
+        for e in self.edges:
+            v1 = e[0]
+            v2 = e[1]
+            if v1 not in vertices:
+                vertices.append(v1)
+            if v2 not in vertices:
+                vertices.append(v2)
+        return vertices
+
+    def fill_union_find(self, union_find):
+        vertices = self.list_of_vertices()
+        for v in vertices:
+            union_find.makeset(v)
+        return union_find
 
     def __repr__(self):
         return '\n'.join(map(str, self.edges))
+
+    #   Input: A weighted, connected graph G = <V,E>
+    #   Output: M, the set of edges composing a minimum spanning tree of G.
+    def kruskals(self):
+        self.sort_edges();
+        min_span_tree_set = set()
+        union_find = UnionFind()
+        union_find = self.fill_union_find(union_find)
+
+        num_processed_edges = 0
+        while len(min_span_tree_set) < self.nvertices - 1:
+            edge = self.edges[num_processed_edges]
+            v = edge[0]
+            u = edge[1]
+
+            if is_acyclic(union_find, edge):
+                min_span_tree_set.add(edge)
+                union_find.union(v, u)
+            num_processed_edges += 1
+        return min_span_tree_set
 
 
 def read_from_file(fname):
@@ -124,15 +193,13 @@ if __name__ == '__main__':
 
     # Create graph in desired form
     graph = read_from_file(args.file)
-    if args.adjlist:
-        graph = graph.convert_to_adj()
 
-    # Get MST of input graph
-    mst = graph.prims()
-    total_weight = 0
-    print("Minimum Spanning Tree")
-    print('-' * 80)
-    for edge in mst:
+    graph.sort_edges()
+    min_span_tree = graph.kruskals()
+    print("The edges involved in the minimum spanning tree are as follows: ")
+    t_weight = 0.0
+    for edge in min_span_tree:
         print(edge)
-        total_weight += edge[2]
-    print("Total weight of the tree:", total_weight)
+        t_weight += edge[2]
+    print("The total weight of the tree is: " + str(t_weight))
+
