@@ -1,5 +1,9 @@
 from sys import argv, exit
-import os
+
+'''
+Modified from code distributed by Jeff Lund, Professor at PSU
+Originally distributed for CS350
+'''
 
 
 class AdjVertex:
@@ -218,5 +222,3 @@ if __name__ == '__main__':
     print(path[0])
     for i in range(1, n):
         print(" -> " + path[i])
-
-
